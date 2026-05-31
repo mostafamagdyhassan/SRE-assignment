@@ -1,0 +1,27 @@
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,sqs
+      - DEBUG=1
+      - AWS_DEFAULT_REGION=us-east-1
+
+  scanner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      network: host
+    container_name: scanner
+    depends_on:
+      - localstack
+    environment:
+      - S3_ENDPOINT=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - QUEUE_URL=http://localstack:4566/000000000000/scan-queue
+      - WORKER_CONCURRENCY=4
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
